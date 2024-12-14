@@ -168,7 +168,6 @@ Item* Item::clone() const
 		if (item->getDuration() > 0) {
 			item->incrementReferenceCounter();
 			item->setDecaying(DECAYING_TRUE);
-			g_game.toDecayItems.push_front(item);
 		}
 	}
 	return item;
@@ -250,14 +249,14 @@ void Item::setID(uint16_t newid)
 	uint32_t newDuration = it.decayTime * 1000;
 
 	if (newDuration == 0 && !it.stopTime && it.decayTo < 0) {
-		removeAttribute(ITEM_ATTRIBUTE_DECAYSTATE);
+		setDecaying(DECAYING_STOPPING);
 		removeAttribute(ITEM_ATTRIBUTE_DURATION);
 	}
 
 	removeAttribute(ITEM_ATTRIBUTE_CORPSEOWNER);
 
 	if (newDuration > 0 && (!prevIt.stopTime || !hasAttribute(ITEM_ATTRIBUTE_DURATION))) {
-		setDecaying(DECAYING_FALSE);
+		setDecaying(DECAYING_PENDING);
 		setDuration(newDuration);
 	}
 }
@@ -450,7 +449,7 @@ Attr_ReadValue Item::readAttr(AttrTypes_t attr, PropStream& propStream)
 				return ATTR_READ_ERROR;
 			}
 
-			setDuration(std::max<int32_t>(0, duration));
+			setDuration(duration);
 			break;
 		}
 
@@ -768,7 +767,7 @@ void Item::serializeAttr(PropWriteStream& propWriteStream) const
 
 	if (hasAttribute(ITEM_ATTRIBUTE_DURATION)) {
 		propWriteStream.write<uint8_t>(ATTR_DURATION);
-		propWriteStream.write<uint32_t>(getIntAttr(ITEM_ATTRIBUTE_DURATION));
+		propWriteStream.write<int32_t>(getDuration());
 	}
 
 	ItemDecayState_t decayState = getDecaying();
@@ -1780,6 +1779,11 @@ ItemAttributes::Attribute& ItemAttributes::getAttr(itemAttrTypes type)
 void Item::startDecaying()
 {
 	g_game.startDecay(this);
+}
+
+void Item::stopDecaying()
+{
+	g_game.stopDecay(this);
 }
 
 bool Item::hasMarketAttributes() const
