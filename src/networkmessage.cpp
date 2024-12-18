@@ -124,7 +124,7 @@ void NetworkMessage::addItem(const Item* item)
 	if (item->hasAttribute(ITEM_ATTRIBUTE_DURATION) && item->getDuration() > 0) {
 		if (item->isPickupable() && !item->getContainer()) {
 			addByte(0x01);
-			add<uint64_t>(OTSYS_TIME() + item->getDuration());
+			add<uint32_t>(item->getDuration());
 			addByte(it.stopTime ? 1 : 0);
 		}
 		else {
